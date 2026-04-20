@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Write a Letter</title>
+  <link rel="stylesheet" href="style.css">
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@300;400;500;600&display=swap" rel="stylesheet">
+</head>
+<body>
+
+<nav class="navbar">
+  <img src="images/logo.png" alt="Ragam Logo" class="nav-logo">
+  <div class="nav-links">
+    <a href="index.html">Home</a>
+    <a href="letter.html">Write</a>
+    <a href="index.html#support">Support</a>
+    <a href="#" onclick="enterAdminMode()">Admin</a>
+  </div>
+</nav>
+
+<div class="container">
+  <h1>Write Your Letter</h1>
+
+  <form id="letterForm">
+    <input type="text" id="to" placeholder="Dear..." required>
+    <textarea id="message" rows="6" placeholder="Write your letter..." required></textarea>
+    <input type="text" id="author" placeholder="Pen Name (optional)">
+    <label>Choose a color:</label>
+
+    <div class="color-picker">
+  <img id="housePreview" src="images/blue.png" class="preview-house">
+
+  <div class="color-options">
+    <span class="color-circle blue selected" data-color="blue"></span>
+    <!--<span class="color-circle yellow" data-color="yellow"></span>-->
+    <span class="color-circle red" data-color="red"></span>
+    <span class="color-circle pink" data-color="pink"></span>
+    <span class="color-circle green" data-color="green"></span>
+  </div>
+</div>
+
+<!-- hidden input to store selected color -->
+<input type="hidden" id="color" value="blue">
+    <button type="submit">Submit Letter</button>
+  </form>
+</div>
+
+<script src="script.js"></script>
+</body>
+</html>
