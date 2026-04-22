@@ -1,4 +1,25 @@
 // =========================
+// P5 PARTY SETUP 🌍
+// =========================
+let shared;
+
+function setup() {
+  if (typeof partyConnect !== "undefined") {
+    noCanvas();
+
+    partyConnect(
+      "wss://p5party.org",
+      "ragam-space",
+      "main-room"
+    );
+
+    shared = partyLoadShared("letters", {
+      letters: []
+    });
+  }
+}
+
+// =========================
 // ADMIN MODE (persistent)
 // =========================
 let isAdmin = localStorage.getItem("isAdmin") === "true";
@@ -23,7 +44,6 @@ const houseImages = {
   pink: "images/pink.png",
   red: "images/red.png",
   green: "images/green.png",
-  //yellow: "images/yellow.png"
 };
 
 // =========================
@@ -42,10 +62,14 @@ if (form) {
   form.addEventListener("submit", function(e) {
     e.preventDefault();
 
+    if (!shared) return;
+
     const to = document.getElementById("to").value;
     const message = document.getElementById("message").value;
     const authorInput = document.getElementById("author").value;
     const color = document.getElementById("color").value;
+
+    if (!to || !message) return;
 
     const author = authorInput.trim() === "" ? "Anonymous" : authorInput;
 
@@ -57,10 +81,7 @@ if (form) {
       color
     };
 
-    let letters = JSON.parse(localStorage.getItem("letters")) || [];
-    letters.push(letter);
-
-    localStorage.setItem("letters", JSON.stringify(letters));
+    shared.letters.push(letter);
 
     window.location.href = "index.html";
   });
@@ -71,16 +92,17 @@ if (form) {
 // =========================
 const container = document.getElementById("lettersContainer");
 
-if (container) {
-  const letters = JSON.parse(localStorage.getItem("letters")) || [];
+function renderLetters() {
+  if (!container || !shared) return;
 
-  letters.forEach((letter) => {
+  container.innerHTML = "";
+
+  shared.letters.forEach((letter) => {
     const box = document.createElement("div");
     box.classList.add("letter-box");
 
     const color = letter.color || "blue";
 
-    // 🏠 CREATE HOUSE IMAGE
     const img = document.createElement("img");
     img.src = houseImages[color];
     img.alt = "Letter House";
@@ -97,6 +119,13 @@ if (container) {
 }
 
 // =========================
+// REAL-TIME SYNC
+// =========================
+function draw() {
+  renderLetters();
+}
+
+// =========================
 // VIEW LETTER (VIEW PAGE)
 // =========================
 const viewContainer = document.getElementById("letterView");
@@ -105,50 +134,46 @@ if (viewContainer) {
   const params = new URLSearchParams(window.location.search);
   const id = params.get("id");
 
-  let letters = JSON.parse(localStorage.getItem("letters")) || [];
-  const letter = letters.find(l => l.id == id);
+  function renderView() {
+    if (!shared) return;
 
-  if (letter) {
-    viewContainer.innerHTML = `
-      <h1>Dear ${letter.to},</h1>
-      <p>${letter.message}</p>
-      <br>
-      <p><em>— ${letter.author}</em></p>
-    `;
+    const letter = shared.letters.find(l => l.id == id);
 
-    // =========================
-    // DELETE BUTTON (ONLY ADMIN)
-    // =========================
-    if (isAdmin) {
-      const deleteBtn = document.createElement("button");
-      deleteBtn.innerText = "Delete Letter";
-      deleteBtn.style.marginTop = "20px";
-      deleteBtn.style.padding = "10px";
-      deleteBtn.style.background = "red";
-      deleteBtn.style.color = "white";
-      deleteBtn.style.border = "none";
-      deleteBtn.style.cursor = "pointer";
+    if (letter) {
+      viewContainer.innerHTML = `
+        <h1>Dear ${letter.to},</h1>
+        <p>${letter.message}</p>
+        <br>
+        <p><em>— ${letter.author}</em></p>
+      `;
 
-      deleteBtn.addEventListener("click", () => {
-        const confirmDelete = confirm("Are you sure you want to delete this letter?");
-        
-        if (confirmDelete) {
-          const updatedLetters = letters.filter(l => l.id != id);
-          localStorage.setItem("letters", JSON.stringify(updatedLetters));
+      // DELETE BUTTON (ADMIN ONLY)
+      if (isAdmin) {
+        const deleteBtn = document.createElement("button");
+        deleteBtn.innerText = "Delete Letter";
+        deleteBtn.style.marginTop = "20px";
+        deleteBtn.style.padding = "10px";
+        deleteBtn.style.background = "red";
+        deleteBtn.style.color = "white";
+        deleteBtn.style.border = "none";
+        deleteBtn.style.cursor = "pointer";
 
-          alert("Letter deleted");
+        deleteBtn.addEventListener("click", () => {
+          shared.letters = shared.letters.filter(l => l.id != id);
           window.location.href = "index.html";
-        }
-      });
+        });
 
-      viewContainer.appendChild(deleteBtn);
+        viewContainer.appendChild(deleteBtn);
+      }
+
+    } else {
+      viewContainer.innerHTML = "<p>Letter not found.</p>";
     }
-
-  } else {
-    viewContainer.innerHTML = "<p>Letter not found.</p>";
   }
 
-
+  function draw() {
+    renderView();
+  }
 }
 
 // =========================
@@ -161,18 +186,13 @@ document.addEventListener("DOMContentLoaded", () => {
 
   colorCircles.forEach(circle => {
     circle.addEventListener("click", () => {
-      // remove previous selection
       colorCircles.forEach(c => c.classList.remove("selected"));
 
-      // select new
       circle.classList.add("selected");
 
       const chosenColor = circle.getAttribute("data-color");
 
-      // update hidden input
       colorInput.value = chosenColor;
-
-      // update preview image
       preview.src = `images/${chosenColor}.png`;
     });
   });
